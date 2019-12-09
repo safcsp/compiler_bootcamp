@@ -11,7 +11,7 @@ class Tokenizer:
   def __init__(self, source_code):
     self.position = -1
     self.line_number = 1
-    self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print']
+    self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
     self.punctuations = {
       '(' : 'left_paren',
       ')' : 'right_paren',
@@ -21,6 +21,7 @@ class Tokenizer:
       ',' : 'comma',
       '{' : 'left_curly',
       '}' : 'right_curly',
+      ':' : 'colon'
     }
     self.source_code = source_code
     self.length = len(self.source_code)
@@ -133,7 +134,8 @@ class Tokenizer:
     character = self.source_code[self.position]
     tid = self.punctuations[character]
     return Token(tid, character, 'punctuation', self.position, self.line_number)
-    
+  
+      
   def tokenize(self):
     self.position += 1
 

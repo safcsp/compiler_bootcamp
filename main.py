@@ -16,7 +16,7 @@ style = {
   'comment' : 'color:gray',
   'identifier': 'color: #F94',
   'literal': 'color:black; font-weight:bold',
-  'error' : 'color: white; background-color:red; padding: 8px;',
+  'error' : 'color: black; border-bottom: 1px dashed red; padding-bottom: -2px;',
   'whitespace': '',
   'EOF': ''
 }

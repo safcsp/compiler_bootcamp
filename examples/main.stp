@@ -1,5 +1,2 @@
-var int fileSize = 200;
-
-if fileSize == 405
-   print (fileSize)
-end
+def getFileSize():
+  return 100
