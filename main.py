@@ -18,6 +18,15 @@ class Tokenizer:
 
   def is_eof(self):
     return not self.position < self.length
+  
+  def is_peekable(self):
+    return (self.position + 1) < self.length
+  
+  def peek(self):
+    if self.is_peekable():
+      return self.source_code[self.position + 1]
+    return '\0'
+
 
   def number_tokenizer(self):
     character = self.source_code[self.position]
@@ -47,10 +56,10 @@ class Tokenizer:
         token.value += character
         self.position += 1
       
-      if token.value in self.step_keywords:
-        token.category = 'keyword'
-        token.tid = token.value + '_keyword'
-        return token
+    if token.value in self.step_keywords:
+      token.category = 'keyword'
+      token.tid = token.value + '_keyword'
+      return token
 
     return token
   
@@ -90,6 +99,16 @@ class Tokenizer:
 
     return token
 
+  def plus_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('plus', character, 'operator', self.position, self.line_number)
+    if self.peek() == '+':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'plusplus'
+
+    return token
+    
   def tokenize(self):
     self.position += 1
 
@@ -103,15 +122,17 @@ class Tokenizer:
         return self.whitespace_tokenizer()
       elif character == '#': #Comment
         return self.comment_tokenizer()
+      elif character == '+':
+        return self.plus_tokenizer()
       else:
         raise Exception('Step Error[' + str(self.line_number) + ', ' + str(self.position) +']: unexpected token "' + character + '"')
         
       self.position += 1
     return Token('EOF','EOF', 'EOF', self.position, self.line_number)
 
-tokenizer = Tokenizer("def var size 10 #This is a comment var x = 2")
+tokenizer = Tokenizer("let fileSize = 10")
 token = tokenizer.tokenize()
 while token.category != 'EOF':
-  print('category ->', token.category, 'value ->', token.value, 'position ->', token.position, 'line number ->', token.line_number)
+  print('token id ->', token.tid, 'category ->', token.category, 'value ->', token.value, 'position ->', token.position, 'line number ->', token.line_number)
   token = tokenizer.tokenize()
   
