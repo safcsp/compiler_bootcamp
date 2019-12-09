@@ -11,7 +11,17 @@ class Tokenizer:
   def __init__(self, source_code):
     self.position = -1
     self.line_number = 1
-    self.step_keywords = ['def', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end']
+    self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end']
+    self.punctuations = {
+      '(' : 'left_paren',
+      ')' : 'right_paren',
+      '[' : 'left_square',
+      ']' : 'right_square',
+      ';' : 'semicolon',
+      ',' : 'colon',
+      '{' : 'left_curly',
+      '}' : 'right_curly',
+    }
     self.source_code = source_code
     self.length = len(self.source_code)
 
@@ -102,12 +112,27 @@ class Tokenizer:
   def plus_tokenizer(self):
     character = self.source_code[self.position]
     token = Token('plus', character, 'operator', self.position, self.line_number)
-    if self.peek() == '+':
+    peek_value = self.peek()
+    if peek_value == '+':
       self.position += 1
       token.value += self.source_code[self.position]
       token.tid = 'plusplus'
 
     return token
+  
+  def equal_tokenizer(self): 
+    character = self.source_code[self.position]
+    token = Token('assignment', character, 'operator', self.position, self.line_number)
+    if self.peek() == '=':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'equalequal'
+    return token
+
+  def punctuation_tokenizer(self): 
+    character = self.source_code[self.position]
+    tid = self.punctuations[character]
+    return Token(tid, character, 'punctuation', self.position, self.line_number)
     
   def tokenize(self):
     self.position += 1
@@ -124,13 +149,17 @@ class Tokenizer:
         return self.comment_tokenizer()
       elif character == '+':
         return self.plus_tokenizer()
+      elif character in self.punctuations.keys():
+        return self.punctuation_tokenizer()
+      elif character == '=':
+        return self.equal_tokenizer()
       else:
         raise Exception('Step Error[' + str(self.line_number) + ', ' + str(self.position) +']: unexpected token "' + character + '"')
         
       self.position += 1
     return Token('EOF','EOF', 'EOF', self.position, self.line_number)
 
-tokenizer = Tokenizer("let fileSize = 10")
+tokenizer = Tokenizer("var int fileSize = 200;")
 token = tokenizer.tokenize()
 while token.category != 'EOF':
   print('token id ->', token.tid, 'category ->', token.category, 'value ->', token.value, 'position ->', token.position, 'line number ->', token.line_number)
