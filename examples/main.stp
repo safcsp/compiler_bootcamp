@@ -1,2 +1,1 @@
-def getFileSize():
-  return 100
+var int fileSize = 200

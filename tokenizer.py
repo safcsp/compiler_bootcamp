@@ -8,9 +8,11 @@ class Token:
     self.line_number = line_number
 
 class Tokenizer:
-  def __init__(self, source_code):
+  def __init__(self, source_code, ignore_whitespace=False):
     self.position = -1
     self.line_number = 1
+    self.ignore_whitepsace = ignore_whitespace
+
     self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
     self.punctuations = {
       '(' : 'left_paren',
@@ -146,7 +148,9 @@ class Tokenizer:
       elif character.isalpha() or character == '_': #Identifier
         return self.identifier_tokenizer()
       elif character.isspace(): #Space
-        return self.whitespace_tokenizer()
+        token = self.whitespace_tokenizer()
+        if not self.ignore_whitepsace:
+          return token
       elif character == '#': #Comment
         return self.comment_tokenizer()
       elif character == '+':
