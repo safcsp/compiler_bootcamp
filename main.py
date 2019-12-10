@@ -11,6 +11,9 @@ tokenizer = Tokenizer(source_code, True)
 parser = Parser(tokenizer)
 
 syntax_tree = parser.parse()
+if parser.current_level != 0:
+  raise Exception('brackets error')
+
 print(syntax_tree)
   
 

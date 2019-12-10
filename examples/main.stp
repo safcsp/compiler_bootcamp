@@ -1,5 +1,6 @@
-var int fileSize = 200
-var boolean isActive = 1
-print 498
-var int dataSize = 452
-print 500
+var int isActive = 0
+while 10 {
+  var int fileSize = 200
+  print 200
+}
+print 10

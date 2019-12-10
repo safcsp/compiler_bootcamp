@@ -21,10 +21,17 @@ class PrintStatement(Statement):
     self.token = token
     self.literal = literal
 
+class WhileStatement(Statement):
+  def __init__(self, token, literal, statements=[]):
+    self.token = token
+    self.literal = literal
+    self.statements = statements
+
 class Parser:
   def __init__(self, tokenizer):
     self.tokenizer = tokenizer
     self.current_token = None
+    self.current_level = 0
   
   def syntax_error(self, token, message):
     raise Exception('[Step(syntax error)]:' + message + ', ' + token.value + ', line number: ' + str(token.line_number) + ', position: ' + str(token.position))
@@ -38,9 +45,29 @@ class Parser:
     
     return PrintStatement(print_token, self.current_token)
 
+  def match(self, token_value):
+    self.current_token = self.tokenizer.tokenize()
+    if self.current_token.value != token_value:
+      self.syntax_error(self.current_token, 'unexpected token')
     
+  def while_parser(self):
+    # while literal {statements} 
+    while_token = self.current_token
+    self.current_token = self.tokenizer.tokenize()
 
+    if self.current_token.category != 'literal':
+      self.syntax_error(self.current_token, 'literal expected')
+    
+    literal_token = self.current_token
 
+    self.match('{')
+    self.current_level += 1
+    statements = self.parse()
+    #self.match('}')
+
+    return WhileStatement(while_token, literal_token, statements)
+
+    
   def var_parser(self):
     # var datatype id = literal
     var_token = self.current_token
@@ -56,9 +83,7 @@ class Parser:
       self.syntax_error(self.current_token, 'identifier expected')
 
     identifier_token = self.current_token
-    self.current_token = self.tokenizer.tokenize()
-    if not self.current_token.value == '=':
-      self.syntax_error(self.current_token,'assignment operator expected')
+    self.match('=')
 
     self.current_token = self.tokenizer.tokenize()
     if self.current_token.category != 'literal':
@@ -79,6 +104,11 @@ class Parser:
           statements.append(self.var_parser())
         elif self.current_token.value == 'print':
           statements.append(self.print_parser())
+        elif self.current_token.value == 'while':
+          statements.append(self.while_parser())
+      elif self.current_token.value == '}':
+        self.current_level -= 1
+        return statements
       elif self.current_token.category == 'comment':
         continue
       elif self.current_token.category == 'whitespace':
