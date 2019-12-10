@@ -21,7 +21,7 @@ class PrintStatement(Statement):
     self.token = token
     self.literal = literal
 
-class WhileStatement(Statement):
+class WhileStatement(BlockStatement):
   def __init__(self, token, literal, statements=[]):
     self.token = token
     self.literal = literal
