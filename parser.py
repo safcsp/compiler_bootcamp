@@ -6,96 +6,175 @@ class Node:
 class Statement(Node):
   pass
 
+class Expression(Node):
+  pass
+
+class BinaryExpression(Expression):
+  def __init__(self, left_exp, operator, right_exp): # 2 + (3 * 5)
+    self.operator = operator
+    self.left_exp = left_exp    
+    self.right_exp = right_exp
+
+class UnaryExpression(Expression):
+  def __init__(self, operator, exp):
+    self.operator = operator
+    self.expression = exp
+
+class LiteralExpression(Expression):
+  def __init__(self,exp):
+    self.expression = exp
+
+class IdentifierExpression(Expression):
+  def __init__(self,exp):
+    self.expression = exp
+
+class GroupingExpression(Expression):
+  def __init__(self,exp):
+    self.expression = exp
+
+
 class BlockStatement(Node):
   pass
 
 class VarStatement(Statement):
-  def __init__(self, token, datatype, identifier, value):
+  def __init__(self, token, datatype, identifier, expression):
     self.token = token
     self.datatype = datatype
     self.identifer = identifier
-    self.value = value
+    self.expression = expression
 
+#print expression
 class PrintStatement(Statement):
-  def __init__(self, token, literal):
+  def __init__(self, token, expression):
     self.token = token
-    self.literal = literal
+    self.expression = expression
 
 class WhileStatement(BlockStatement):
-  def __init__(self, token, literal, statements=[]):
+  def __init__(self, token, expression, statements=[]):
     self.token = token
-    self.literal = literal
+    self.expression = expression
     self.statements = statements
 
 class Parser:
   def __init__(self, tokenizer):
     self.tokenizer = tokenizer
     self.current_token = None
+    self.next_token = None
     self.current_level = 0
+
+    self.is_first_token = True
   
   def syntax_error(self, token, message):
     raise Exception('[Step(syntax error)]:' + message + ', ' + token.value + ', line number: ' + str(token.line_number) + ', position: ' + str(token.position))
 
-  def print_parser(self):
-    # print literal
-    print_token = self.current_token
-    self.current_token = self.tokenizer.tokenize()
-    if self.current_token.category != 'literal':
-      self.syntax_error(self.current_token, 'literal expected')
+  def consume(self):
+
+    if self.is_first_token:
+      self.current_token = self.tokenizer.tokenize()
+      self.is_first_token = False
+    else:
+      self.current_token = self.next_token
     
-    return PrintStatement(print_token, self.current_token)
+    self.next_token = self.tokenizer.tokenize()
+
+  def print_parser(self):
+    # print expression
+    return PrintStatement(self.current_token, self.expression())
 
   def match(self, token_value):
-    self.current_token = self.tokenizer.tokenize()
+    self.consume()
     if self.current_token.value != token_value:
       self.syntax_error(self.current_token, 'unexpected token')
     
   def while_parser(self):
-    # while literal {statements} 
+    # while expression {statements} 
     while_token = self.current_token
-    self.current_token = self.tokenizer.tokenize()
-
-    if self.current_token.category != 'literal':
-      self.syntax_error(self.current_token, 'literal expected')
-    
-    literal_token = self.current_token
-
+    expression = self.expression()
     self.match('{')
     self.current_level += 1
     statements = self.parse()
     #self.match('}')
 
-    return WhileStatement(while_token, literal_token, statements)
-
+    return WhileStatement(while_token, expression, statements)
     
   def var_parser(self):
-    # var datatype id = literal
+    # var datatype id = expression
     var_token = self.current_token
-    self.current_token = self.tokenizer.tokenize()
+    self.consume()
 
     if not self.current_token.category == 'keyword' and not self.current_token.value in ['int', 'float', 'string', 'boolean']:
       self.syntax_error(self.current_token, 'datatype expected')
 
     datatype_token = self.current_token
 
-    self.current_token = self.tokenizer.tokenize()
+    self.consume()
     if self.current_token.category != 'identifier':
       self.syntax_error(self.current_token, 'identifier expected')
 
     identifier_token = self.current_token
     self.match('=')
 
-    self.current_token = self.tokenizer.tokenize()
-    if self.current_token.category != 'literal':
-      self.syntax_error(self.current_token,'literal expected')
+    return VarStatement(var_token, datatype_token, identifier_token, self.expression() )
 
-    literal_token = self.current_token
+  def expression(self):
+    self.consume()
+    expr = self.relational()
+    while self.next_token.value == '==' or self.next_token.value == '!=':
+      self.consume()
+      operator = self.current_token
+      self.consume()
+      right_expr = self.relational()
+      expr = BinaryExpression(expr, operator, right_expr)
+    
+    return expr
 
-    return VarStatement(var_token, datatype_token, identifier_token, literal_token)
+  def relational(self):
+    expr = self.addition()
+    while self.next_token.value == '>' or self.next_token.value == '>=' or self.next_token.value == '<' or self.next_token.value == '<=':
+      self.consume()
+      operator = self.current_token
+      self.consume()
+      right_expr = self.addition()
+      expr = BinaryExpression(expr, operator, right_expr)
+    
+    return expr
+
+  def addition(self):  #2 + 5 * 3
+    expr = self.term()
+    while self.next_token.value == '+' or self.next_token.value == '-':
+      self.consume()
+      operator = self.current_token
+      self.consume()
+      right_expr = self.term()
+      expr = BinaryExpression(expr, operator, right_expr)
+    
+    return expr
+  
+  def term(self):
+    expr = self.factor()
+    while self.next_token.value == '*' or self.next_token.value == '/':
+      self.consume()
+      operator = self.current_token
+      self.consume()
+      right_expr = self.factor()
+      expr = BinaryExpression(expr, operator, right_expr)
+    
+    return expr
+    
+    
+  def factor(self):
+    if self.current_token.category == 'literal':
+      return LiteralExpression(self.current_token)
+    elif self.current_token.category == 'identifier':
+      return IdentifierExpression(self.current_token)
+    elif self.current_token.value == '(':
+      result = GroupingExpression(self.expression())
+      self.match(')')
+      return result
 
   def parse(self):
     statements = []
-    self.current_token = self.tokenizer.tokenize()
+    self.consume()
 
     while self.current_token.category != 'EOF':
 
@@ -118,6 +197,6 @@ class Parser:
       else:
         self.syntax_error(self.current_token, 'unexpected token')
       
-      self.current_token = self.tokenizer.tokenize() 
+      self.consume() 
 
     return statements

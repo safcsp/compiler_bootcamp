@@ -112,6 +112,29 @@ class Tokenizer:
 
     return token
 
+  def gt_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('gt', character, 'operator', self.position, self.line_number)
+    peek_value = self.peek()
+    if peek_value == '=':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'gte'
+
+    return token
+  
+  def lt_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('lt', character, 'operator', self.position, self.line_number)
+    peek_value = self.peek()
+    if peek_value == '=':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'lte'
+
+    return token
+
+
   def plus_tokenizer(self):
     character = self.source_code[self.position]
     token = Token('plus', character, 'operator', self.position, self.line_number)
@@ -123,6 +146,27 @@ class Tokenizer:
 
     return token
   
+  def minus_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('minus', character, 'operator', self.position, self.line_number)
+    peek_value = self.peek()
+    if peek_value == '-':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'minusminus'
+
+    return token
+  
+  def multiplication_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('multiplication', character, 'operator', self.position, self.line_number)
+    return token
+  
+  def division_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('division', character, 'operator', self.position, self.line_number)
+    return token
+  
   def equal_tokenizer(self): 
     character = self.source_code[self.position]
     token = Token('assignment', character, 'operator', self.position, self.line_number)
@@ -130,6 +174,15 @@ class Tokenizer:
       self.position += 1
       token.value += self.source_code[self.position]
       token.tid = 'equalequal'
+    return token
+  
+  def not_tokenizer(self): 
+    character = self.source_code[self.position]
+    token = Token('not', character, 'operator', self.position, self.line_number)
+    if self.peek() == '=':
+      self.position += 1
+      token.value += self.source_code[self.position]
+      token.tid = 'notequal'
     return token
 
   def punctuation_tokenizer(self): 
@@ -149,16 +202,28 @@ class Tokenizer:
         return self.identifier_tokenizer()
       elif character.isspace(): #Space
         token = self.whitespace_tokenizer()
-        if not self.ignore_whitepsace:
+        if not self.ignore_whitespace:
           return token
       elif character == '#': #Comment
         return self.comment_tokenizer()
       elif character == '+':
         return self.plus_tokenizer()
+      elif character == '-':
+        return self.minus_tokenizer()
+      elif character == '*':
+        return self.multiplication_tokenizer()
+      elif character == '/':
+        return self.division_tokenizer()
       elif character in self.punctuations.keys():
         return self.punctuation_tokenizer()
       elif character == '=':
         return self.equal_tokenizer()
+      elif character == '>':
+        return self.gt_tokenizer()
+      elif character == '<':
+        return self.lt_tokenizer()
+      elif character == '!':
+        return self.not_tokenizer()
       else:
         return Token('error', character, 'error', self.position, self.line_number)
         

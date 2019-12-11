@@ -15,6 +15,3 @@ if parser.current_level != 0:
   raise Exception('brackets error')
 
 print(syntax_tree)
-  
-
-  

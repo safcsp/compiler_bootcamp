@@ -1,10 +1,4 @@
-var int isActive = 0
-while 10 {
-  var int fileSize = 200
-  print 200
-  while 700 {
-    print 7
-    print 8
-  }
+var int fooBar = 2 + 2 - 4 + 3
+while fooBar < 2 {
+  print fooBar + 9
 }
-print 10
