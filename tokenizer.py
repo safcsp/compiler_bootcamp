@@ -11,7 +11,7 @@ class Tokenizer:
   def __init__(self, source_code, ignore_whitespace=False):
     self.position = -1
     self.line_number = 1
-    self.ignore_whitepsace = ignore_whitespace
+    self.ignore_whitespace = ignore_whitespace
 
     self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
     self.punctuations = {
