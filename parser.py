@@ -8,29 +8,36 @@ class Statement(Node):
     self.token = token
 
 class Expression(Node):
-  pass
+  def __init__(self, value=None, vtype=None):
+    self.value = value
+    self.vtype = vtype
 
 class BinaryExpression(Expression):
   def __init__(self, left_exp, operator, right_exp): # 2 + (3 * 5)
+    super().__init__()
     self.operator = operator
     self.left_exp = left_exp    
     self.right_exp = right_exp
 
 class UnaryExpression(Expression):
   def __init__(self, operator, exp):
+    super().__init__()
     self.operator = operator
     self.expression = exp
 
 class LiteralExpression(Expression):
   def __init__(self,exp):
+    super().__init__()
     self.expression = exp
 
 class IdentifierExpression(Expression):
   def __init__(self,exp):
+    super().__init__()
     self.expression = exp
 
 class GroupingExpression(Expression):
   def __init__(self,exp):
+    super().__init__()
     self.expression = exp
 
 
@@ -169,8 +176,19 @@ class Parser:
       operator = self.current_token
       self.consume()
       right_expr = self.term()
+      left_value = expr.value
+      right_value = right_expr.value
+      result_value = 0
+      
+      if operator.value == '+':
+        result_value = left_value + right_value
+      elif operator.value == '-':
+        result_value = left_value - right_value
+      
       expr = BinaryExpression(expr, operator, right_expr)
-    
+      expr.value = result_value
+      expr.vtype = 'int'
+
     return expr
   
   def term(self):
@@ -180,20 +198,40 @@ class Parser:
       operator = self.current_token
       self.consume()
       right_expr = self.factor()
+      
+      left_value = expr.value
+      right_value = right_expr.value
+      result_value = 0
+      
+      if operator.value == '*':
+        result_value = left_value * right_value
+      elif operator.value == '/':
+        result_value = int(left_value / right_value)
+
+      
       expr = BinaryExpression(expr, operator, right_expr)
-    
-    return expr
-    
+      expr.value = result_value
+      expr.vtype = 'int'
+      
+    return expr #(1)
     
   def factor(self):
     if self.current_token.category == 'literal':
-      return LiteralExpression(self.current_token)
+      expr = LiteralExpression(self.current_token)
+      if self.current_token.tid == 'integer_literal':
+        expr.vtype = 'int'
+        expr.value = int(self.current_token.value)
+      return expr
     elif self.current_token.category == 'identifier':
-      return IdentifierExpression(self.current_token)
+      expr = IdentifierExpression(self.current_token)
+      expr.vtype = 'int'
+      expr.value = 1
     elif self.current_token.value == '(':
-      result = GroupingExpression(self.expression())
+      expr = GroupingExpression(self.expression())
       self.match(')')
-      return result
+      expr.value = expr.expression.value
+      expr.vtype = expr.expression.vtype
+      return expr
     
     self.unexpected_token()
 
