@@ -8,23 +8,13 @@ class Token:
     self.line_number = line_number
 
 class Tokenizer:
-  def __init__(self, source_code, ignore_whitespace=False):
+  def __init__(self, source_code, keywords =[], punctuations ={}, ignore_whitespace=False):
     self.position = -1
     self.line_number = 1
     self.ignore_whitespace = ignore_whitespace
 
-    self.step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
-    self.punctuations = {
-      '(' : 'left_paren',
-      ')' : 'right_paren',
-      '[' : 'left_square',
-      ']' : 'right_square',
-      ';' : 'semicolon',
-      ',' : 'comma',
-      '{' : 'left_curly',
-      '}' : 'right_curly',
-      ':' : 'colon'
-    }
+    self.step_keywords = keywords
+    self.punctuations = punctuations
     self.source_code = source_code
     self.length = len(self.source_code)
 
@@ -113,49 +103,28 @@ class Tokenizer:
     return token
 
   def gt_tokenizer(self):
-    character = self.source_code[self.position]
-    token = Token('gt', character, 'operator', self.position, self.line_number)
-    peek_value = self.peek()
-    if peek_value == '=':
-      self.position += 1
-      token.value += self.source_code[self.position]
-      token.tid = 'gte'
-
-    return token
+    return self.one_or_two_tokenizer('gt', '=', 'gte')
   
   def lt_tokenizer(self):
+    return self.one_or_two_tokenizer('lt', '=', 'lte')
+
+
+  def one_or_two_tokenizer(self, first_tid, peek_character, second_tid):
     character = self.source_code[self.position]
-    token = Token('lt', character, 'operator', self.position, self.line_number)
+    token = Token(first_tid, character, 'operator', self.position, self.line_number)
     peek_value = self.peek()
-    if peek_value == '=':
+    if peek_value == peek_character:
       self.position += 1
       token.value += self.source_code[self.position]
-      token.tid = 'lte'
+      token.tid = second_tid
 
     return token
-
 
   def plus_tokenizer(self):
-    character = self.source_code[self.position]
-    token = Token('plus', character, 'operator', self.position, self.line_number)
-    peek_value = self.peek()
-    if peek_value == '+':
-      self.position += 1
-      token.value += self.source_code[self.position]
-      token.tid = 'plusplus'
-
-    return token
+    return self.one_or_two_tokenizer('plus', '+', 'plusplus')
   
   def minus_tokenizer(self):
-    character = self.source_code[self.position]
-    token = Token('minus', character, 'operator', self.position, self.line_number)
-    peek_value = self.peek()
-    if peek_value == '-':
-      self.position += 1
-      token.value += self.source_code[self.position]
-      token.tid = 'minusminus'
-
-    return token
+    return self.one_or_two_tokenizer('minus', '-', 'minusminus')
   
   def multiplication_tokenizer(self):
     character = self.source_code[self.position]
@@ -168,22 +137,10 @@ class Tokenizer:
     return token
   
   def equal_tokenizer(self): 
-    character = self.source_code[self.position]
-    token = Token('assignment', character, 'operator', self.position, self.line_number)
-    if self.peek() == '=':
-      self.position += 1
-      token.value += self.source_code[self.position]
-      token.tid = 'equalequal'
-    return token
+    return self.one_or_two_tokenizer('assignment', '=', 'equalequal')
   
   def not_tokenizer(self): 
-    character = self.source_code[self.position]
-    token = Token('not', character, 'operator', self.position, self.line_number)
-    if self.peek() == '=':
-      self.position += 1
-      token.value += self.source_code[self.position]
-      token.tid = 'notequal'
-    return token
+    return self.one_or_two_tokenizer('not', '=', 'notequal')
 
   def punctuation_tokenizer(self): 
     character = self.source_code[self.position]

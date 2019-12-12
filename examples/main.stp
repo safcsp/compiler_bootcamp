@@ -1,4 +1,0 @@
-var int fooBar = 2 + 2 - 4 + 3
-while fooBar < 2 {
-  print fooBar + 9
-}
