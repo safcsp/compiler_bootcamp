@@ -1,6 +1,7 @@
 
-from tokenizer import Tokenizer
-from parser import Parser
+from step.tokenizer import *
+from step.parser import *
+#result = evaluate(expr)
 
 step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
 step_punctuations = {
