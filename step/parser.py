@@ -55,6 +55,14 @@ class UnaryExpression(Expression):
     super().__init__()
     self.operator = operator
     self.expression = exp
+  
+  def evaluate(self, parser):
+    if self.operator.value == '-':
+      self.vtype = self.expression.vtype
+      self.value = -1 * int(self.expression.value)
+    elif self.operator.value == '!':
+      self.vtype = 'boolean'
+      self.value = not (bool(self.expression.value))
 
 class LiteralExpression(Expression):
   def __init__(self,exp):
@@ -228,7 +236,7 @@ class Parser:
     return expr
   
   def term(self):
-    expr = self.factor()
+    expr = self.unary()
     while self.next_token.value == '*' or self.next_token.value == '/':
       self.consume()
       operator = self.current_token
@@ -237,6 +245,17 @@ class Parser:
       expr = BinaryExpression(expr, operator, right_expr)
       expr.evaluate(self)
     return expr #(1)
+  
+  def unary(self):
+    if self.current_token.value == '-' or self.current_token.value == '!':
+      self.consume()
+      operator = self.current_token
+      right_expr = self.unary()
+      expr = UnaryExpression(operator, right_expr)
+      expr.evaluate(self)
+      return expr
+
+    return self.factor()
     
   def factor(self):
     if self.current_token.category == 'literal':
