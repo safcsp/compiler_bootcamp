@@ -1,9 +1,12 @@
 
 from step.tokenizer import *
 from step.parser import *
+from step.object import *
+from step.evaluator import *
+
 #result = evaluate(expr)
 
-step_keywords = ['let', 'var', 'int', 'float', 'string', 'boolean', 'if', 'else', 'for', 'while', 'end', 'print', 'def', 'return']
+step_keywords = ['var', 'print', 'while', 'true', 'false']
 step_punctuations = {
       '(' : 'left_paren',
       ')' : 'right_paren',
@@ -27,4 +30,6 @@ syntax_tree = parser.parse()
 if parser.current_level != 0:
   raise Exception('brackets error')
 
+eva = Evaluator()
+result = eva.evaluate_expr(syntax_tree[0].expression)
 print(syntax_tree)
