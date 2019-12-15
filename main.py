@@ -4,9 +4,7 @@ from step.parser import *
 from step.object import *
 from step.evaluator import *
 
-#result = evaluate(expr)
-
-step_keywords = ['var', 'print', 'while', 'true', 'false']
+step_keywords = ['var', 'print', 'while', 'true', 'false','null','int', 'float', 'string', 'boolean']
 step_punctuations = {
       '(' : 'left_paren',
       ')' : 'right_paren',
@@ -31,5 +29,4 @@ if parser.current_level != 0:
   raise Exception('brackets error')
 
 eva = Evaluator()
-result = eva.evaluate_expr(syntax_tree[0].expression)
-print(syntax_tree)
+eva.evaluate(syntax_tree)

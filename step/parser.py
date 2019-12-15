@@ -6,6 +6,8 @@ class Node:
 class Statement(Node):
   def __init__(self, token=None):
     self.token = token
+  def evaluate(self, evaluator):
+    pass
 
 class Expression(Node):
   def __init__(self, value=None, vtype=None):
@@ -31,7 +33,6 @@ class LiteralExpression(Expression):
     self.expression = exp
   
 
-
 class IdentifierExpression(Expression):
   def __init__(self,exp):
     super().__init__()
@@ -56,11 +57,15 @@ class VarStatement(Statement):
     self.identifer = identifier
     self.expression = expression
 
-#print expression
 class PrintStatement(Statement):
   def __init__(self, token, expression):
     super().__init__(token)
     self.expression = expression
+  
+  def evaluate(self, evaluator):
+    result = evaluator.evaluate_expr(self.expression)
+    print(result.value)
+
 
 class WhileStatement(BlockStatement):
   def __init__(self, token, expression, statements=[]):
@@ -170,15 +175,8 @@ class Parser:
   #   return self.factor()
     
   def factor(self):
-    if self.current_token.category == 'keyword':
-      if self.current_token.value in ['true', 'false']:
-        token = self.current_token
-        token.category = 'literal'
-        token.tid = 'boolean_literal'
-        return LiteralExpression(token)
-    elif self.current_token.category == 'literal':
-      if self.current_token.tid == 'integer_literal':
-        return LiteralExpression(self.current_token)
+    if self.current_token.category == 'literal':
+      return LiteralExpression(self.current_token)
     elif self.current_token.category == 'identifier':
       expr = IdentifierExpression(self.current_token)
       return expr

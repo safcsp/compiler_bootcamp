@@ -1,7 +1,1 @@
-
-
-
-
-
-
-print 2 + false
+print "Welcome to Step Programming Language"

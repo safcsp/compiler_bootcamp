@@ -1,12 +1,15 @@
 from step.parser import *
 from step.object import *
 
+
 class Evaluator:
   def __init__(self):
     pass
 
   def evaluate(self, syntax_tree):
-    pass
+    for statement in syntax_tree:
+      statement.evaluate(self)
+      #print(statement.token.value)
 
   #StepObject
   def evaluate_expr(self, expr):
@@ -18,6 +21,8 @@ class Evaluator:
           return StepObject(True, 'boolean')
         else:
           return StepObject(False, 'boolean')
+      elif expr.expression.tid == 'string_literal':
+        return StepObject(expr.expression.value, 'string')
     elif isinstance(expr, IdentifierExpression):
       return StepObject(1,'integer')
     elif isinstance(expr, BinaryExpression):
@@ -34,6 +39,8 @@ class Evaluator:
               return StepObject(left_operand.value + 1, 'integer')
             else:
               return StepObject(left_operand.value, 'integer')
+          elif right_operand.vtype == 'string':
+            return StepObject(str(left_operand.value) + right_operand.value, 'string')
         elif left_operand.vtype == 'boolean':
           if right_operand.vtype == 'integer':
             if left_operand.value:
@@ -42,7 +49,16 @@ class Evaluator:
               return StepObject(right_operand.value, 'integer')
           elif right_operand.vtype == 'boolean':
             return StepObject(left_operand.value or right_operand.value, 'boolean')
-            # 2 + - 4
+          elif right_operand.vtype == 'string':
+            raise Exception ('(boolean + string) operation is not allowed')
+        elif left_operand.vtype == 'string':
+          if right_operand.vtype == 'integer':
+            result = left_operand.value + str(right_operand.value)
+            return StepObject(result, 'string')
+          elif right_operand.vtype == 'boolean':
+            raise Exception ('(string + boolean) operation is not allowed')
+          elif right_operand.vtype == 'string':
+            return StepObject(left_operand.value + right_operand.value, 'string')
     return StepObject(1, 'integer')
 
 

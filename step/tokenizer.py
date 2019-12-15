@@ -60,6 +60,15 @@ class Tokenizer:
         self.position += 1
       
     if token.value in self.step_keywords:
+      if token.value in ['true', 'false']:
+        token.category = 'literal'
+        token.tid = 'boolean_literal'
+        return token
+      elif token.value == 'null':
+        token.category = 'literal'
+        token.tid = 'null_literal'
+        return token
+
       token.category = 'keyword'
       token.tid = token.value + '_keyword'
       return token
@@ -79,6 +88,25 @@ class Tokenizer:
         token.value += character
         self.position += 1
 
+    return token
+  
+  def string_tokenizer(self):
+    character = self.source_code[self.position]
+    token = Token('string_literal', '', 'literal', self.position, self.line_number)
+    self.position += 1
+    has_error = True
+    while not self.is_eof():
+      character = self.source_code[self.position]
+      if character == '"':
+        has_error = False
+        break
+      else: 
+        token.value += character
+        self.position += 1
+    
+    if has_error:
+      raise Exception("unmatched string qoute")
+    
     return token
   
   def whitespace_tokenizer(self):
@@ -181,6 +209,8 @@ class Tokenizer:
         return self.lt_tokenizer()
       elif character == '!':
         return self.not_tokenizer()
+      elif character == '"':
+        return self.string_tokenizer()
       else:
         return Token('error', character, 'error', self.position, self.line_number)
         
