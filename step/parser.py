@@ -95,6 +95,19 @@ class WhileStatement(BlockStatement):
     super().__init__(token, statements)
     self.expression = expression
 
+  def evaluate(self, evaluator, symt):
+    result = evaluator.evaluate_expr(self.expression, symt)
+    if result.vtype != 'boolean':
+      raise Exception('Invalid while expression')
+
+    while result.value:
+      evaluator.evaluate(self.statements, symt)
+      result = evaluator.evaluate_expr(self.expression, symt)
+      if result.vtype != 'boolean':
+        raise Exception('Invalid while expression')
+
+
+
 class Parser:
   def __init__(self, tokenizer, symt):
     self.tokenizer = tokenizer
@@ -181,11 +194,21 @@ class Parser:
     
     return LetStatement(let_token, identifier_token, self.expression() )
 
-  
   def expression(self):  #2 + 5 * 3
     self.consume()
-    expr = self.term()
+    expr = self.relational()
     while self.next_token.value == '+' or self.next_token.value == '-':
+      self.consume()
+      operator = self.current_token
+      self.consume()
+      right_expr = self.relational()
+      expr = BinaryExpression(expr, operator, right_expr)
+
+    return expr
+
+  def relational(self):  #2 + 5 * 3
+    expr = self.term()
+    while self.next_token.value == '>' or self.next_token.value == '<':
       self.consume()
       operator = self.current_token
       self.consume()

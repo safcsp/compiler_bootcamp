@@ -61,6 +61,17 @@ class Evaluator:
             raise Exception ('(string + boolean) operation is not allowed')
           elif right_operand.vtype == 'string':
             return StepObject(left_operand.value + right_operand.value, 'string')
+      elif operator == '<':
+        if left_operand.vtype == 'int':
+          if right_operand.vtype == 'int':
+            result = left_operand.value < right_operand.value
+            return StepObject(result, 'boolean')
+      elif operator == '>':
+        if left_operand.vtype == 'int':
+          if right_operand.vtype == 'int':
+            result = left_operand.value > right_operand.value
+            return StepObject(result, 'boolean')
+
     return StepObject(1, 'int')
 
 
