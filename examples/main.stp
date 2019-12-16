@@ -1,0 +1,4 @@
+var int demoVar = 7
+print demoVar
+let demoVar = 22
+print demoVar + 3

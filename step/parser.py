@@ -1,4 +1,5 @@
 from step.tokenizer import *
+from step.symboltable import *
 
 class Node:
   pass
@@ -6,7 +7,7 @@ class Node:
 class Statement(Node):
   def __init__(self, token=None):
     self.token = token
-  def evaluate(self, evaluator):
+  def evaluate(self, evaluator, symt):
     pass
 
 class Expression(Node):
@@ -56,14 +57,36 @@ class VarStatement(Statement):
     self.datatype = datatype
     self.identifer = identifier
     self.expression = expression
+  
+  def evaluate(self, evaluator, symt):
+    result = evaluator.evaluate_expr(self.expression, symt)
+    entry = symt.lookup(self.identifer.value)
+    if entry.datatype != result.vtype:
+      raise Exception("Invalid var expression")
+    entry.value = result
+
+class LetStatement(Statement):
+  def __init__(self, token, identifier, expression):
+    super().__init__(token)
+    self.identifer = identifier
+    self.expression = expression
+  
+  def evaluate(self, evaluator, symt):
+    result = evaluator.evaluate_expr(self.expression, symt)
+    entry = symt.lookup(self.identifer.value)
+    if entry.datatype != result.vtype:
+      raise Exception("Invalid let expression")
+
+    entry.value = result
+    
 
 class PrintStatement(Statement):
   def __init__(self, token, expression):
     super().__init__(token)
     self.expression = expression
   
-  def evaluate(self, evaluator):
-    result = evaluator.evaluate_expr(self.expression)
+  def evaluate(self, evaluator, symt):
+    result = evaluator.evaluate_expr(self.expression, symt)
     print(result.value)
 
 
@@ -73,13 +96,14 @@ class WhileStatement(BlockStatement):
     self.expression = expression
 
 class Parser:
-  def __init__(self, tokenizer):
+  def __init__(self, tokenizer, symt):
     self.tokenizer = tokenizer
     self.current_token = None
     self.next_token = None
     self.current_level = 0
 
     self.is_first_token = True
+    self.symt = symt
   
   def syntax_error(self, token, message):
     raise Exception('[Step(syntax error)]:' + message + ', ' + token.value + ', line number: ' + str(token.line_number) + ', position: ' + str(token.position))
@@ -122,7 +146,6 @@ class Parser:
 
     return WhileStatement(while_token, expression, statements)
   
-  
   def var_parser(self):
     # var datatype id = expression
     var_token = self.current_token
@@ -137,8 +160,26 @@ class Parser:
     identifier_token = self.current_token
     self.match('=')
 
+    ventry = VariableEntry(datatype_token.value, 0, 0)
+    self.symt.insert(identifier_token.value, ventry)
+
     return VarStatement(var_token, datatype_token, identifier_token, self.expression() )
 
+
+  def let_parser(self):
+    # let id = expression
+    let_token = self.current_token
+
+    self.match_category('identifier')
+    identifier_token = self.current_token
+
+    ventry = self.symt.lookup(identifier_token.value)
+    if ventry == None:
+      self.syntax_error(identifier_token, "undefined variable")
+    
+    self.match('=')
+    
+    return LetStatement(let_token, identifier_token, self.expression() )
 
   
   def expression(self):  #2 + 5 * 3
@@ -196,6 +237,8 @@ class Parser:
       if self.current_token.category == 'keyword':
         if self.current_token.value == 'var':
           statements.append(self.var_parser())
+        elif self.current_token.value == 'let':
+          statements.append(self.let_parser())
         elif self.current_token.value == 'print':
           statements.append(self.print_parser())
         elif self.current_token.value == 'while':
