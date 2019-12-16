@@ -43,7 +43,26 @@ class Tokenizer:
       else: #isdigit
         token.value += character
         self.position += 1
+    
+    # check for float literal
+    if self.peek() == '.':
+      token.tid = 'float_literal'
+      self.position += 1
+      token.value += '.'
+      has_error = True
+      while not self.is_eof():
+        self.position += 1
+        character = self.source_code[self.position]
+        if not character.isdigit():
+          self.position -= 1
+          break
+        else: #isdigit
+          token.value += character
+          has_error = False
 
+      if has_error:
+        raise Exception('Invalid float literal')
+      
     return token
   
   def identifier_tokenizer(self):
