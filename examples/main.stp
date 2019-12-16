@@ -1,1 +1,8 @@
-print fooBar
+
+var int result = 0
+let result = result + 1
+
+while result < 10{
+  print result
+  let result = result + 1
+}
