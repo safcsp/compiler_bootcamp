@@ -8,7 +8,10 @@ class Evaluator:
 
   def evaluate(self, syntax_tree, symt):
     for statement in syntax_tree:
-      statement.evaluate(self, symt)
+      if isinstance(statement, BlockStatement):
+        statement.evaluate(self, statement.symt)
+      else:
+        statement.evaluate(self, symt)
 
   #StepObject
   def evaluate_expr(self, expr, symt):

@@ -47,9 +47,10 @@ class GroupingExpression(Expression):
   
 
 class BlockStatement(Statement):
-  def __init__(self, token=None, statements=[]):
+  def __init__(self, token=None, statements=[], symt_name= None,symt_type=None, parent_symt=None):
     super().__init__(token)
     self.statements = statements
+    self.symt = SymbolTable(symt_name,symt_type, parent_symt)
 
 class VarStatement(Statement):
   def __init__(self, token, datatype, identifier, expression):
@@ -91,8 +92,8 @@ class PrintStatement(Statement):
 
 
 class WhileStatement(BlockStatement):
-  def __init__(self, token, expression, statements=[]):
-    super().__init__(token, statements)
+  def __init__(self, token, expression, statements=[], parent_symt=None):
+    super().__init__(token,statements, 'while','loop',  parent_symt)
     self.expression = expression
 
   def evaluate(self, evaluator, symt):
@@ -107,6 +108,12 @@ class WhileStatement(BlockStatement):
         raise Exception('Invalid while expression')
 
 
+class FunStatement(BlockStatement):
+  def __init__(self, token, datatype, identifier, parameters=[], statements=[], parent_symt=None):
+    super().__init__(token,statements, identifier.value, 'fun', parent_symt)
+    self.datatype = datatype
+    self.identifier = identifier
+    self.parameters = parameters
 
 class Parser:
   def __init__(self, tokenizer, symt):
@@ -117,6 +124,7 @@ class Parser:
 
     self.is_first_token = True
     self.symt = symt
+    self.active_symt = symt
   
   def syntax_error(self, token, message):
     raise Exception('[Step(syntax error)]:' + message + ', ' + token.value + ', line number: ' + str(token.line_number) + ', position: ' + str(token.position))
@@ -125,7 +133,6 @@ class Parser:
     self.syntax_error(self.current_token, 'unexpected token')
 
   def consume(self):
-
     if self.is_first_token:
       self.current_token = self.tokenizer.tokenize()
       self.is_first_token = False
@@ -154,10 +161,82 @@ class Parser:
     expression = self.expression()
     self.match('{')
     self.current_level += 1
-    statements = self.parse()
     #self.match('}')
 
-    return WhileStatement(while_token, expression, statements)
+    while_statement = WhileStatement(while_token, expression, None, self.active_symt)
+    self.active_symt = while_statement.symt
+    while_statement.statements = self.parse()
+    return while_statement
+  
+  # <fun-statement> ::= FUN <datatype> ID ([<parameters>]){<statements>}
+  # <parameters> ::= <parameter> | <parameter>, <parameters>
+  # <parameter> ::= <datatype> ID
+
+  def fun_parser(self):
+    if self.current_level != 0:
+      raise Exception('Invalid function definition. Function must be inside global scope.')
+    
+    fun_token = self.current_token
+
+    self.consume()
+    if not self.current_token.category == 'keyword' and not self.current_token.value in ['int', 'float', 'string', 'boolean']:
+      self.syntax_error(self.current_token, 'datatype expected')
+
+    datatype_token = self.current_token
+    self.match_category('identifier')
+    identifier_token = self.current_token
+
+    fun_statement = FunStatement(fun_token, datatype_token, identifier_token, [], None, self.active_symt)
+    self.active_symt = fun_statement.symt
+
+    self.match('(')
+    parameters = []
+    if self.next_token.value == ')':
+      self.match(')')
+    else:
+      parameters = self.parameters_parser()
+      self.match(')')
+    
+    self.match('{')
+
+    self.current_level += 1
+
+    entry = FunctionEntry(datatype_token.value, parameters, fun_statement.symt)
+    self.symt.insert(identifier_token.value, entry)
+    fun_statement.parameters = parameters
+    fun_statement.statements = self.parse()
+    return fun_statement
+
+  # <parameters> ::= <parameter> | <parameter>, <parameters>
+
+  def parameters_parser(self):
+    parameters = []
+    parameters.append(self.parameter_parser())
+    while self.next_token.value == ',':
+      self.consume()
+      parameters.append(self.parameter_parser())
+    
+    return parameters
+  
+  # <parameter> ::= <datatype> ID
+
+  def parameter_parser(self):
+    self.consume()
+    if not self.current_token.category == 'keyword' and not self.current_token.value in ['int', 'float', 'string', 'boolean']:
+      self.syntax_error(self.current_token, 'datatype expected')
+    
+    datatype = self.current_token
+    self.match_category('identifier')
+
+    parameter = {
+      'datatype': datatype,
+      'name' : self.current_token
+    }
+
+    entry = ParameterEntry(datatype, 0)
+    self.active_symt.insert(self.current_token.value, entry)
+    
+    return parameter
   
   def var_parser(self):
     # var datatype id = expression
@@ -174,7 +253,7 @@ class Parser:
     self.match('=')
 
     ventry = VariableEntry(datatype_token.value, 0, 0)
-    self.symt.insert(identifier_token.value, ventry)
+    self.active_symt.insert(identifier_token.value, ventry)
 
     return VarStatement(var_token, datatype_token, identifier_token, self.expression() )
 
@@ -186,13 +265,14 @@ class Parser:
     self.match_category('identifier')
     identifier_token = self.current_token
 
-    ventry = self.symt.lookup(identifier_token.value)
+    ventry = self.active_symt.lookup(identifier_token.value)
     if ventry == None:
       self.syntax_error(identifier_token, "undefined variable")
     
     self.match('=')
     
     return LetStatement(let_token, identifier_token, self.expression() )
+  
 
   def expression(self):  #2 + 5 * 3
     self.consume()
@@ -268,8 +348,11 @@ class Parser:
           statements.append(self.while_parser())
         elif self.current_token.value == 'for':
           statements.append(self.for_parser())
+        elif self.current_token.value == 'fun':
+          statements.append(self.fun_parser())
       elif self.current_token.value == '}':
         self.current_level -= 1
+        self.active_symt = self.active_symt.parent
         return statements
       elif self.current_token.category == 'comment':
         continue
@@ -283,3 +366,9 @@ class Parser:
       self.consume() 
 
     return statements
+  
+  def statements(self):
+    syntax_tree = self.parse()
+    if self.current_level != 0:
+      raise Exception('brackets error')
+    return syntax_tree

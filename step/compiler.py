@@ -5,7 +5,7 @@ from step.symboltable import *
 
 class StepCompiler:
   def __init__(self):
-    self.step_keywords = ['var', 'let', 'print', 'while', 'true', 'false','null','int', 'float', 'string', 'boolean']
+    self.step_keywords = ['var', 'let', 'print', 'while', 'true', 'false','null','int', 'float', 'string', 'boolean', 'fun']
     self.step_punctuations = {
       '(' : 'left_paren',
       ')' : 'right_paren',
@@ -28,10 +28,15 @@ class StepCompiler:
       source_code = stp.read(1024)
 
     tokenizer = Tokenizer(source_code,self.step_keywords,self.step_punctuations, True)
-    symt = SymbolTable('global')
+    symt = SymbolTable('global', 'module')
     parser = Parser(tokenizer, symt)
-    syntax_tree = parser.parse()
-    if parser.current_level != 0:
-      raise Exception('brackets error')
+    syntax_tree = parser.statements()
+    self.analyze_convension(symt)
     eva = Evaluator()
     eva.evaluate(syntax_tree, symt)
+  
+  def analyze_convension(self, symt):
+    for identifier, entry in symt.entriers.items():
+      if len(identifier) < 3:
+        raise Exception("analyzer: identifier name must be 3 or more characters")
+

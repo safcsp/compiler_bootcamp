@@ -1,8 +1,10 @@
 
-var int result = 0
-let result = result + 1
+var int object = 504
 
-while result < 10{
-  print result
-  let result = result + 1
+fun int sumTwoValues(int firstValue, int secondValue, 
+boolean isAdd, string result){
+  var int base = 8
+  print firstValue + secondValue + object
 }
+
+print "Function has added to Step programming language"
