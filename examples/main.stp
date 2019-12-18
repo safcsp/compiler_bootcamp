@@ -1,10 +1,6 @@
 
-var int object = 504
-
-fun int sumTwoValues(int firstValue, int secondValue, 
-boolean isAdd, string result){
-  var int base = 8
-  print firstValue + secondValue + object
+fun int sum (int a, int b){
+  while a > b{
+    return a + b
+  }
 }
-
-print "Function has added to Step programming language"

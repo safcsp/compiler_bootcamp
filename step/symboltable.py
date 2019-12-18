@@ -10,8 +10,14 @@ class SymbolTable:
       self.parent.children.append(self)
   
   def insert(self, name, entry):
+    if self.is_exists(name):
+      raise Exception("duplicated identifier " + name)
     self.entriers[name] = entry
   
+  def is_exists(self, name):
+    entry = self.entriers.get(name, None)
+    return entry != None
+
   def lookup(self, name):
     active_symt = self
     entry = None
@@ -20,6 +26,15 @@ class SymbolTable:
       if entry != None:
         return entry
       active_symt = active_symt.parent
+  
+  def type_lookup(self, stype):
+    active_symt = self
+    while active_symt != None:
+      if active_symt.stype == stype:
+        return active_symt
+      active_symt = active_symt.parent
+    
+    return None
 
 
 class SymtEntry:

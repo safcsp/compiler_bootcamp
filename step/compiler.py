@@ -5,7 +5,7 @@ from step.symboltable import *
 
 class StepCompiler:
   def __init__(self):
-    self.step_keywords = ['var', 'let', 'print', 'while', 'true', 'false','null','int', 'float', 'string', 'boolean', 'fun']
+    self.step_keywords = ['var', 'let', 'print', 'while', 'true', 'false','null','int', 'float', 'string', 'boolean', 'fun', 'return']
     self.step_punctuations = {
       '(' : 'left_paren',
       ')' : 'right_paren',

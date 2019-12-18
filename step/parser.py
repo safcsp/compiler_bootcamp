@@ -89,6 +89,14 @@ class PrintStatement(Statement):
   def evaluate(self, evaluator, symt):
     result = evaluator.evaluate_expr(self.expression, symt)
     print(result.value)
+  
+class ReturnStatement(Statement):
+  def __init__(self, token, expression):
+    super().__init__(token)
+    self.expression = expression
+  
+  def evaluate(self, evaluator, symt):
+    pass
 
 
 class WhileStatement(BlockStatement):
@@ -144,6 +152,12 @@ class Parser:
   def print_parser(self):
     # print expression
     return PrintStatement(self.current_token, self.expression())
+  
+  def return_parser(self):
+    if self.active_symt.type_lookup('fun') == None:
+      raise Exception("'return' statement must be used inside a function.")
+    return ReturnStatement(self.current_token, self.expression())
+
 
   def match(self, token_value):
     self.consume()
@@ -350,6 +364,8 @@ class Parser:
           statements.append(self.for_parser())
         elif self.current_token.value == 'fun':
           statements.append(self.fun_parser())
+        elif self.current_token.value == 'return':
+          statements.append(self.return_parser())
       elif self.current_token.value == '}':
         self.current_level -= 1
         self.active_symt = self.active_symt.parent
