@@ -10,10 +10,19 @@ class Statement(Node):
   def evaluate(self, evaluator, symt):
     pass
 
+class ExpressionStatement(Statement):
+  def __init__(self, expression):
+    self.expression = expression
+
 class Expression(Node):
   def __init__(self, value=None, vtype=None):
     self.value = value
     self.vtype = vtype
+
+class CallExpression(Expression):
+  def __init__(self, identifier, arguments=[]):
+    self.identifier = identifier
+    self.arguments = arguments
 
 class BinaryExpression(Expression):
   def __init__(self, left_exp, operator, right_exp): # 2 + (3 * 5)
@@ -312,12 +321,12 @@ class Parser:
     return expr
   
   def term(self):
-    expr = self.factor()
+    expr = self.postfix()
     while self.next_token.value == '*' or self.next_token.value == '/':
       self.consume()
       operator = self.current_token
       self.consume()
-      right_expr = self.factor()
+      right_expr = self.postfix()
       expr = BinaryExpression(expr, operator, right_expr)
     return expr #(1)
   
@@ -331,7 +340,29 @@ class Parser:
   #     return expr
 
   #   return self.factor()
+  
+  def postfix(self):
+    expr = self.factor()
+    if isinstance(expr, IdentifierExpression) and self.next_token.value == '(':    
+      self.match('(')
+      if self.next_token.value == ')':
+        arguments = []
+      else:
+        arguments = self.arguments_parser()
+      
+      self.match(')')
+      return CallExpression(expr, arguments)
+
+    return expr
+
+  def arguments_parser(self):
+    arguments = [self.expression()]
+    while self.next_token.value == ',':
+      self.match(',')
+      arguments.append(self.expression())
     
+    return arguments
+
   def factor(self):
     if self.current_token.category == 'literal':
       return LiteralExpression(self.current_token)
@@ -370,14 +401,11 @@ class Parser:
         self.current_level -= 1
         self.active_symt = self.active_symt.parent
         return statements
-      elif self.current_token.category == 'comment':
-        continue
-      elif self.current_token.category == 'whitespace':
-        continue
       elif self.current_token.category == 'error':
         self.unexpected_token()
-      else:
-        self.unexpected_token()
+      elif self.current_token.category == 'identifier':
+        expr = self.postfix()
+        statements.append(ExpressionStatement(expr))
       
       self.consume() 
 

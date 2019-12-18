@@ -1,6 +1,1 @@
-
-fun int sum (int a, int b){
-  while a > b{
-    return a + b
-  }
-}
+printMessage()
